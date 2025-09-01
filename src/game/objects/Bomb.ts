@@ -14,6 +14,11 @@ export class Bomb extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(false);
     
+    // Debug: Check physics body
+    console.log('Bomb: Physics body created:', this.body);
+    console.log('Bomb: Physics body enabled:', this.body?.enable);
+    console.log('Bomb: Physics body width/height:', this.body?.width, this.body?.height);
+    
     // Set depth to ensure bombs are above background
     this.setDepth(10);
     

@@ -6,6 +6,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private exhaustFlame: Phaser.GameObjects.Sprite;
   private trailParticles: Phaser.GameObjects.Particles.ParticleEmitter;
   
+  // Lives and invulnerability system
+  private lives: number = Config.PLAYER_LIVES;
+  private isInvulnerable: boolean = false;
+  private invulnerabilityTimer: Phaser.Time.TimerEvent | null = null;
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
     
@@ -13,6 +18,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
     this.setBounce(0.1);
+    
+    // Debug: Check physics body
+    console.log('Player: Physics body created:', this.body);
+    console.log('Player: Physics body enabled:', this.body?.enable);
+    console.log('Player: Physics body width/height:', this.body?.width, this.body?.height);
     
     // Create exhaust flame
     this.exhaustFlame = scene.add.sprite(x - 20, y + 5, 'exhaustFlame');
@@ -91,7 +101,78 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.trailParticles.setPosition(this.x - 15, this.y + 5);
   }
   
+  // Public methods for lives and invulnerability
+  getLives(): number {
+    return this.lives;
+  }
+  
+  isPlayerInvulnerable(): boolean {
+    return this.isInvulnerable;
+  }
+  
+  loseLife(): void {
+    if (this.isInvulnerable) return; // Can't lose life while invulnerable
+    
+    this.lives--;
+    console.log(`Player: Life lost! Lives remaining: ${this.lives}`);
+    
+    // Activate invulnerability
+    this.activateInvulnerability();
+  }
+  
+  private activateInvulnerability(): void {
+    this.isInvulnerable = true;
+    console.log(`Player: Invulnerability activated for ${Config.INVULN_MS_AFTER_HIT}ms`);
+    
+    // Start blinking effect
+    this.startBlinking();
+    
+    // Set timer to end invulnerability
+    this.invulnerabilityTimer = this.scene.time.delayedCall(Config.INVULN_MS_AFTER_HIT, () => {
+      this.endInvulnerability();
+    });
+  }
+  
+  private startBlinking(): void {
+    // Toggle visibility every 100ms during invulnerability
+    const blinkTimer = this.scene.time.addEvent({
+      delay: 100,
+      callback: () => {
+        if (this.isInvulnerable) {
+          this.setVisible(!this.visible);
+          this.exhaustFlame.setVisible(!this.exhaustFlame.visible);
+        }
+      },
+      loop: true
+    });
+    
+    // Store blink timer reference for cleanup
+    (this as any).blinkTimer = blinkTimer;
+  }
+  
+  private endInvulnerability(): void {
+    this.isInvulnerable = false;
+    this.setVisible(true);
+    this.exhaustFlame.setVisible(this.isThrusting);
+    
+    // Clean up blink timer
+    if ((this as any).blinkTimer) {
+      (this as any).blinkTimer.destroy();
+      (this as any).blinkTimer = null;
+    }
+    
+    console.log('Player: Invulnerability ended');
+  }
+  
   destroy(): void {
+    // Clean up timers
+    if (this.invulnerabilityTimer) {
+      this.invulnerabilityTimer.destroy();
+    }
+    if ((this as any).blinkTimer) {
+      (this as any).blinkTimer.destroy();
+    }
+    
     this.exhaustFlame.destroy();
     this.trailParticles.destroy();
     super.destroy();

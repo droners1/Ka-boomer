@@ -9,6 +9,7 @@ export class GameScene extends Phaser.Scene {
   private spawner!: Spawner;
   private worldScrollX: number = 0;
   private backgroundLayers: Phaser.GameObjects.TileSprite[] = [];
+  private livesText!: Phaser.GameObjects.Text; // Store reference to lives text
   
   constructor() {
     super({ key: 'GameScene' });
@@ -43,6 +44,10 @@ export class GameScene extends Phaser.Scene {
     this.add.existing(testBomb);
     console.log('GameScene: Created test bomb at', testBomb.x, testBomb.y);
     
+    // Also add collision with the test bomb
+    this.physics.add.collider(this.player, testBomb, this.onPlayerHitBomb, undefined, this);
+    console.log('GameScene: Added collision detection with test bomb');
+    
     // Add some ground reference lines for testing
     this.add.line(0, Config.WORLD_HEIGHT - 50, 0, 0, Config.WORLD_WIDTH, 0, 0x666666)
       .setOrigin(0, 0);
@@ -64,6 +69,15 @@ export class GameScene extends Phaser.Scene {
       backgroundColor: '#000',
       padding: { x: 10, y: 5 }
     });
+    
+    // Add lives display - store reference for updating
+    this.livesText = this.add.text(50, 50, `Lives: ${this.player.getLives()}`, {
+      fontSize: '20px',
+      color: '#FF0000',
+      fontFamily: 'Arial, sans-serif',
+      backgroundColor: '#000',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0, 0);
     
     console.log('GameScene: Player created at', this.player.x, this.player.y);
   }
@@ -115,10 +129,30 @@ export class GameScene extends Phaser.Scene {
   }
   
   private onPlayerHitBomb(_player: any, bomb: any): void {
+    console.log('=== COLLISION DETECTED ===');
     console.log('Player hit bomb!');
+    console.log('Bomb position:', bomb.x, bomb.y);
+    console.log('Player position:', this.player.x, this.player.y);
+    console.log('Player lives before:', this.player.getLives());
     
-    // For now, just log the collision
-    // In Phase 4, we'll implement lives and game over
-    console.log('Bomb collision detected at:', bomb.x, bomb.y);
+    // Use the new lives system
+    this.player.loseLife();
+    
+    // Update the lives display
+    this.livesText.setText(`Lives: ${this.player.getLives()}`);
+    
+    // Remove bomb from spawner group before destroying
+    if (this.spawner.getBombs().contains(bomb)) {
+      this.spawner.getBombs().remove(bomb);
+      console.log('Bomb removed from spawner group');
+    }
+    
+    // Destroy the bomb
+    console.log('Attempting to destroy bomb...');
+    bomb.destroy();
+    console.log('Bomb destroy() called');
+    
+    console.log('Player lives after:', this.player.getLives());
+    console.log('=== END COLLISION ===');
   }
 }

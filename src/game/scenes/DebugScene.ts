@@ -55,3 +55,5 @@ export class DebugScene extends Phaser.Scene {
     console.log('=== DEBUG SCENE SETUP COMPLETE ===');
   }
 }
+
+
