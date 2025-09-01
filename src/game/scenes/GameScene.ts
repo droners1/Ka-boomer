@@ -37,21 +37,11 @@ export class GameScene extends Phaser.Scene {
     
     // Set up collision detection
     this.physics.add.collider(this.player, this.spawner.getBombs(), this.onPlayerHitBomb, undefined, this);
-    console.log('GameScene: Collision detection set up between player and bombs');
-    console.log('GameScene: Player physics body:', this.player.body);
-    console.log('GameScene: Bombs group:', this.spawner.getBombs());
-    
-    // Debug: Enable physics debug to see collision bodies
-    this.physics.world.drawDebug = true;
-    console.log('GameScene: Physics debug enabled');
     
     // Debug: Create a test bomb to verify sprites work
     const testBomb = new Bomb(this, Config.WORLD_WIDTH - 100, Config.WORLD_HEIGHT / 2);
     this.add.existing(testBomb);
-    // Add test bomb to spawner group so it can trigger collisions
-    this.spawner.getBombs().add(testBomb);
     console.log('GameScene: Created test bomb at', testBomb.x, testBomb.y);
-    console.log('GameScene: Test bomb added to spawner group');
     
     // Add some ground reference lines for testing
     this.add.line(0, Config.WORLD_HEIGHT - 50, 0, 0, Config.WORLD_WIDTH, 0, 0x666666)
@@ -125,11 +115,7 @@ export class GameScene extends Phaser.Scene {
   }
   
   private onPlayerHitBomb(_player: any, bomb: any): void {
-    console.log('=== COLLISION DETECTED! ===');
     console.log('Player hit bomb!');
-    console.log('Player position:', _player.x, _player.y);
-    console.log('Bomb position:', bomb.x, bomb.y);
-    console.log('Bomb type:', bomb.constructor.name);
     
     // For now, just log the collision
     // In Phase 4, we'll implement lives and game over
